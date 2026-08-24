@@ -9,6 +9,7 @@ Only download videos you own or have permission to download.
 """
 
 import argparse
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -61,6 +62,26 @@ def find_ffmpeg() -> str | None:
         return None
 
 
+def find_cookies_file() -> str | None:
+    """Locate a cookies.txt (Netscape format) for authenticating with sites like YouTube.
+
+    Checks, in order: the COOKIES_FILE env var, Render's secret-file mount point,
+    and a cookies.txt next to this script (kept out of git via .gitignore).
+    """
+    env_path = os.environ.get("COOKIES_FILE")
+    if env_path and Path(env_path).is_file():
+        return env_path
+
+    candidates = [
+        Path("/etc/secrets/cookies.txt"),
+        Path(__file__).resolve().parent / "cookies.txt",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
 def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> Path:
     """Download url into output_dir/<platform>/ and return the path of the final video file."""
     platform_dir = Path(output_dir) / detect_platform(url)
@@ -76,6 +97,9 @@ def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> Pa
     ffmpeg_dir = find_ffmpeg()
     if ffmpeg_dir:
         ydl_opts["ffmpeg_location"] = ffmpeg_dir
+    cookies_file = find_cookies_file()
+    if cookies_file:
+        ydl_opts["cookiefile"] = cookies_file
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = Path(ydl.prepare_filename(info))
