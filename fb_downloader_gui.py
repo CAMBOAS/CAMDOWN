@@ -28,6 +28,7 @@ def resource_path(*parts: str) -> Path:
 
 
 LOGO_PATH = resource_path("images", "logo", "CAMBO .png")
+ICO_PATH = resource_path("images", "logo", "camdown.ico")
 
 BG = "#0f172a"
 CARD_BG = "#f8fafc"
@@ -67,6 +68,14 @@ class App(ctk.CTk):
         self.after(100, self._drain_log_queue)
 
     def _set_window_icon(self):
+        # iconbitmap (native .ico) is what Windows actually uses for the title
+        # bar and taskbar button; iconphoto alone often falls back to Tk's
+        # generic default icon on Windows.
+        if ICO_PATH.exists():
+            try:
+                self.iconbitmap(str(ICO_PATH))
+            except tk.TclError:
+                pass
         if LOGO_PATH.exists():
             try:
                 full = tk.PhotoImage(file=str(LOGO_PATH))
