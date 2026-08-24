@@ -44,7 +44,7 @@ def detect_platform(url: str) -> str:
 
 
 def find_ffmpeg() -> str | None:
-    """Return a directory containing ffmpeg.exe, checking PATH then common winget install spots."""
+    """Return a directory containing an ffmpeg binary: PATH, winget (Windows), then a bundled static build."""
     on_path = shutil.which("ffmpeg")
     if on_path:
         return str(Path(on_path).parent)
@@ -54,10 +54,15 @@ def find_ffmpeg() -> str | None:
         for candidate in winget_root.glob("Gyan.FFmpeg*/**/ffmpeg.exe"):
             return str(candidate.parent)
 
-    return None
+    try:
+        import imageio_ffmpeg
+        return str(Path(imageio_ffmpeg.get_ffmpeg_exe()).parent)
+    except ImportError:
+        return None
 
 
-def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> None:
+def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> Path:
+    """Download url into output_dir/<platform>/ and return the path of the final video file."""
     platform_dir = Path(output_dir) / detect_platform(url)
     ydl_opts = {
         "outtmpl": str(platform_dir / "%(title)s.%(ext)s"),
@@ -72,7 +77,10 @@ def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> No
     if ffmpeg_dir:
         ydl_opts["ffmpeg_location"] = ffmpeg_dir
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+        info = ydl.extract_info(url, download=True)
+        filename = Path(ydl.prepare_filename(info))
+        merged = filename.with_suffix(".mp4")
+        return merged if merged.exists() else filename
 
 
 def main() -> None:

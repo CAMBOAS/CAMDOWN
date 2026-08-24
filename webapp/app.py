@@ -12,7 +12,7 @@ import uuid
 import webbrowser
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import load_config, resolve_output_dir, save_config  # noqa: E402
@@ -41,11 +41,13 @@ def run_job(job_id: str, url: str, output_dir: str, quality: str) -> None:
 
     try:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        download(url, output_dir, quality, progress_hooks=[hook])
+        file_path = download(url, output_dir, quality, progress_hooks=[hook])
         with jobs_lock:
             jobs[job_id]["status"] = "done"
             jobs[job_id]["percent"] = 100
-            jobs[job_id]["log"].append(f"Done! Saved to: {Path(output_dir).resolve()}")
+            jobs[job_id]["file_path"] = str(file_path)
+            jobs[job_id]["file_name"] = file_path.name
+            jobs[job_id]["log"].append(f"Done! Saved to: {file_path}")
     except Exception as e:
         with jobs_lock:
             jobs[job_id]["status"] = "error"
@@ -83,6 +85,15 @@ def status(job_id: str):
         if not job:
             return jsonify({"error": "Unknown job"}), 404
         return jsonify(job)
+
+
+@app.route("/api/file/<job_id>")
+def file(job_id: str):
+    with jobs_lock:
+        job = jobs.get(job_id)
+    if not job or job.get("status") != "done" or "file_path" not in job:
+        return jsonify({"error": "File not ready"}), 404
+    return send_file(job["file_path"], as_attachment=True, download_name=job["file_name"])
 
 
 if __name__ == "__main__":

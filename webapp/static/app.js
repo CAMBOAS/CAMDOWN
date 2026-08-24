@@ -5,6 +5,7 @@ const progressBar = document.getElementById("progress-bar");
 const logBox = document.getElementById("log");
 const urlInput = document.getElementById("url");
 const clearUrlBtn = document.getElementById("clear-url");
+const saveFileBtn = document.getElementById("save-file");
 
 let pollTimer = null;
 
@@ -34,6 +35,10 @@ async function poll(jobId) {
     clearInterval(pollTimer);
     setBusy(false);
     progressBar.classList.toggle("bg-danger", job.status === "error");
+    if (job.status === "done") {
+      saveFileBtn.href = `/api/file/${jobId}`;
+      saveFileBtn.classList.remove("d-none");
+    }
   }
 }
 
@@ -53,6 +58,7 @@ form.addEventListener("submit", async (e) => {
   setBusy(true);
   progressBar.classList.remove("bg-danger");
   progressBar.style.width = "0%";
+  saveFileBtn.classList.add("d-none");
   appendLog([`Starting: ${url}`]);
 
   const res = await fetch("/api/download", {
