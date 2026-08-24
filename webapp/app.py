@@ -6,6 +6,7 @@ Run:
 Then open http://127.0.0.1:5000 in your browser (it opens automatically).
 """
 
+import os
 import sys
 import threading
 import uuid
@@ -19,6 +20,8 @@ from config import load_config, resolve_output_dir, save_config  # noqa: E402
 from fb_downloader import download  # noqa: E402
 
 app = Flask(__name__)
+
+IS_RENDER = bool(os.environ.get("RENDER"))
 
 jobs: dict[str, dict] = {}
 jobs_lock = threading.Lock()
@@ -57,7 +60,12 @@ def run_job(job_id: str, url: str, output_dir: str, quality: str) -> None:
 @app.route("/")
 def index():
     config = load_config()
-    return render_template("index.html", default_output=str(resolve_output_dir()), default_quality=config["quality"])
+    return render_template(
+        "index.html",
+        default_output=str(resolve_output_dir()),
+        default_quality=config["quality"],
+        is_render=IS_RENDER,
+    )
 
 
 @app.route("/api/download", methods=["POST"])
@@ -70,7 +78,7 @@ def start_download():
     if not url:
         return jsonify({"error": "URL is required"}), 400
 
-    save_config(output_dir=data.get("output"), quality=quality)
+    save_config(output_dir=data.get("output") or None, quality=quality)
 
     job_id = uuid.uuid4().hex
     thread = threading.Thread(target=run_job, args=(job_id, url, output_dir, quality), daemon=True)

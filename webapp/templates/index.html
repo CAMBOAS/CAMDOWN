@@ -34,12 +34,14 @@
             </div>
 
             <div class="row g-3 mb-4">
+              {% if not is_render %}
               <div class="col-md-8">
                 <label for="output" class="form-label">Save to</label>
                 <input type="text" class="form-control" id="output" value="{{ default_output }}">
                 <div class="form-text">Auto-sorted into a subfolder per platform</div>
               </div>
-              <div class="col-md-4">
+              {% endif %}
+              <div class="{{ 'col-md-4' if not is_render else 'col-12' }}">
                 <label for="quality" class="form-label">Quality</label>
                 <select id="quality" class="form-select">
                   {% for q in ["2160", "1080", "720", "480", "360"] %}

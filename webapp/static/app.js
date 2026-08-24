@@ -50,7 +50,7 @@ clearUrlBtn.addEventListener("click", () => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const url = document.getElementById("url").value.trim();
-  const output = document.getElementById("output").value.trim();
+  const output = document.getElementById("output")?.value.trim() || "";
   const quality = document.getElementById("quality").value;
 
   if (!url) return;
