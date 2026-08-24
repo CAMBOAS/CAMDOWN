@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Desktop GUI for fb_downloader.py, built with Tkinter (no extra dependencies).
+"""Desktop GUI for fb_downloader.py, built with CustomTkinter for a modern look.
 
 Run:
     python fb_downloader_gui.py
@@ -10,7 +10,10 @@ import sys
 import threading
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox
+
+import customtkinter as ctk
+from PIL import Image
 
 from config import load_config, resolve_output_dir, save_config
 from fb_downloader import download
@@ -26,162 +29,162 @@ def resource_path(*parts: str) -> Path:
 
 LOGO_PATH = resource_path("images", "logo", "CAMBO .png")
 
+BG = "#0f172a"
+CARD_BG = "#f8fafc"
 ACCENT = "#6366f1"
-BG = "#f4f6fb"
-CARD_BG = "#ffffff"
+ACCENT_HOVER = "#4f46e5"
 TEXT = "#1e293b"
-MUTED = "#64748b"
+MUTED = "#94a3b8"
 LOG_BG = "#0f172a"
 LOG_FG = "#94e2b8"
+ENTRY_BG = "#ffffff"
+ENTRY_BORDER = "#e2e8f0"
+
+ctk.set_appearance_mode("light")
 
 
-class App(tk.Tk):
+class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("CAMDOWN")
-        self.geometry("600x560")
-        self.minsize(560, 520)
-        self.configure(bg=BG)
+        self.geometry("620x720")
+        self.minsize(580, 660)
+        self.configure(fg_color=BG)
 
         self.log_queue: queue.Queue = queue.Queue()
         config = load_config()
         self.output_dir = tk.StringVar(value=str(resolve_output_dir()))
         self.quality = tk.StringVar(value=config["quality"])
+        self.quality_display = tk.StringVar(value=f"{config['quality']}p")
         self.url_var = tk.StringVar()
 
-        self._load_logo()
-        self._build_style()
-        self._build_widgets()
+        self._set_window_icon()
+        self._build_header()
+        self._build_card()
+
         self.output_dir.trace_add("write", self._save_preferences)
-        self.quality.trace_add("write", self._save_preferences)
+        self.quality_display.trace_add("write", self._on_quality_change)
         self.after(100, self._drain_log_queue)
+
+    def _set_window_icon(self):
+        if LOGO_PATH.exists():
+            try:
+                full = tk.PhotoImage(file=str(LOGO_PATH))
+                self.iconphoto(True, full.subsample(max(1, full.width() // 32)))
+            except tk.TclError:
+                pass
 
     def _save_preferences(self, *_args):
         save_config(output_dir=self.output_dir.get().strip(), quality=self.quality.get())
 
-    def _load_logo(self):
-        self.logo_img = None
-        self.logo_icon = None
+    def _on_quality_change(self, *_args):
+        self.quality.set(self.quality_display.get().rstrip("p"))
+        self._save_preferences()
+
+    def _build_header(self):
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.pack(fill="x", pady=(36, 20))
+
         if LOGO_PATH.exists():
-            try:
-                full = tk.PhotoImage(file=str(LOGO_PATH))
-                factor = max(1, full.width() // 72)
-                self.logo_img = full.subsample(factor, factor)
-                self.iconphoto(True, full.subsample(max(1, full.width() // 32)))
-            except tk.TclError:
-                self.logo_img = None
+            img = Image.open(LOGO_PATH)
+            self.logo_img = ctk.CTkImage(light_image=img, dark_image=img, size=(72, 72))
+            ctk.CTkLabel(header, image=self.logo_img, text="").pack()
 
-    def _build_style(self):
-        style = ttk.Style(self)
-        try:
-            style.theme_use("clam")
-        except tk.TclError:
-            pass
+        ctk.CTkLabel(
+            header, text="CAMDOWN", font=ctk.CTkFont(size=26, weight="bold"), text_color="#f8fafc"
+        ).pack(pady=(12, 2))
+        ctk.CTkLabel(
+            header,
+            text="Facebook · YouTube · TikTok · Instagram · Pinterest",
+            font=ctk.CTkFont(size=12),
+            text_color=MUTED,
+        ).pack()
 
-        style.configure("TFrame", background=BG)
-        style.configure("Card.TFrame", background=CARD_BG)
-        style.configure("TLabel", background=BG, foreground=TEXT, font=("Segoe UI", 10))
-        style.configure("Card.TLabel", background=CARD_BG, foreground=TEXT, font=("Segoe UI", 10))
-        style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=("Segoe UI", 9))
-        style.configure("Title.TLabel", background=BG, foreground=TEXT, font=("Segoe UI", 16, "bold"))
-        style.configure("Section.TLabel", background=CARD_BG, foreground=MUTED, font=("Segoe UI", 9, "bold"))
+    def _build_card(self):
+        card = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=20)
+        card.pack(fill="both", expand=True, padx=28, pady=(0, 28))
 
-        style.configure("TEntry", padding=6, fieldbackground="#ffffff")
-        style.configure("TCombobox", padding=6)
+        inner = ctk.CTkFrame(card, fg_color="transparent")
+        inner.pack(fill="both", expand=True, padx=28, pady=28)
 
-        style.configure(
-            "Accent.TButton",
-            background=ACCENT,
-            foreground="white",
-            font=("Segoe UI", 11, "bold"),
-            padding=10,
-            borderwidth=0,
+        self._section_label(inner, "Video URL")
+        url_row = ctk.CTkFrame(inner, fg_color="transparent")
+        url_row.pack(fill="x", pady=(6, 16))
+        url_entry = ctk.CTkEntry(
+            url_row, textvariable=self.url_var, placeholder_text="Paste a video link...",
+            corner_radius=10, fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=38,
         )
-        style.map("Accent.TButton", background=[("active", "#4f46e5"), ("disabled", "#a5a6f5")])
-
-        style.configure("TButton", padding=6)
-        style.configure(
-            "Accent.Horizontal.TProgressbar", troughcolor="#e2e8f0", background=ACCENT, thickness=8
-        )
-
-    def _build_widgets(self):
-        header = ttk.Frame(self, style="TFrame")
-        header.pack(fill="x", padx=24, pady=(24, 12))
-
-        if self.logo_img:
-            tk.Label(header, image=self.logo_img, bg=BG).pack(side="left", padx=(0, 12))
-        header_text = ttk.Frame(header, style="TFrame")
-        header_text.pack(side="left", anchor="center")
-        ttk.Label(header_text, text="CAMDOWN", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(
-            header_text, text="Facebook · YouTube · TikTok · Instagram · Pinterest", style="Muted.TLabel"
-        ).pack(anchor="w")
-
-        card = ttk.Frame(self, style="Card.TFrame")
-        card.pack(fill="both", expand=True, padx=24, pady=(0, 16))
-        inner = ttk.Frame(card, style="Card.TFrame")
-        inner.pack(fill="both", expand=True, padx=20, pady=20)
-
-        ttk.Label(inner, text="VIDEO URL", style="Section.TLabel").pack(anchor="w")
-        url_row = ttk.Frame(inner, style="Card.TFrame")
-        url_row.pack(fill="x", pady=(4, 14))
-        url_entry = ttk.Entry(url_row, textvariable=self.url_var)
         url_entry.pack(side="left", fill="x", expand=True)
         self._add_paste_menu(url_entry)
-        ttk.Button(url_row, text="Clear", command=lambda: self.url_var.set("")).pack(side="left", padx=(6, 0))
+        ctk.CTkButton(
+            url_row, text="✕", width=38, height=38, corner_radius=10,
+            fg_color=ENTRY_BG, hover_color="#fef2f2", text_color=MUTED,
+            border_color=ENTRY_BORDER, border_width=1,
+            command=lambda: self.url_var.set(""),
+        ).pack(side="left", padx=(8, 0))
 
-        row = ttk.Frame(inner, style="Card.TFrame")
-        row.pack(fill="x", pady=(0, 14))
-
-        col_left = ttk.Frame(row, style="Card.TFrame")
-        col_left.pack(side="left", fill="x", expand=True)
-        ttk.Label(col_left, text="SAVE TO", style="Section.TLabel").pack(anchor="w")
-        folder_row = ttk.Frame(col_left, style="Card.TFrame")
-        folder_row.pack(fill="x", pady=(4, 0))
-        folder_entry = ttk.Entry(folder_row, textvariable=self.output_dir)
+        self._section_label(inner, "Save to")
+        folder_row = ctk.CTkFrame(inner, fg_color="transparent")
+        folder_row.pack(fill="x", pady=(6, 4))
+        folder_entry = ctk.CTkEntry(
+            folder_row, textvariable=self.output_dir, corner_radius=10,
+            fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=38,
+        )
         folder_entry.pack(side="left", fill="x", expand=True)
         self._add_paste_menu(folder_entry)
-        ttk.Button(folder_row, text="Browse", command=self._browse_folder).pack(side="left", padx=(6, 0))
-        ttk.Label(
-            col_left, text="Videos are auto-sorted into a subfolder per platform", style="Card.TLabel"
-        ).pack(anchor="w", pady=(4, 0))
+        ctk.CTkButton(
+            folder_row, text="Browse", width=80, height=38, corner_radius=10,
+            fg_color=ENTRY_BG, hover_color="#f1f5f9", text_color=TEXT,
+            border_color=ENTRY_BORDER, border_width=1,
+            command=self._browse_folder,
+        ).pack(side="left", padx=(8, 0))
+        ctk.CTkLabel(
+            inner, text="Auto-sorted into a subfolder per platform", anchor="w",
+            font=ctk.CTkFont(size=11), text_color=MUTED,
+        ).pack(fill="x", pady=(0, 16))
 
-        col_right = ttk.Frame(row, style="Card.TFrame")
-        col_right.pack(side="left", padx=(14, 0))
-        ttk.Label(col_right, text="QUALITY", style="Section.TLabel").pack(anchor="w")
-        ttk.Combobox(
-            col_right, textvariable=self.quality, values=QUALITIES, state="readonly", width=8
-        ).pack(pady=(4, 0))
+        self._section_label(inner, "Quality")
+        ctk.CTkOptionMenu(
+            inner, values=[f"{q}p" for q in QUALITIES], variable=self.quality_display,
+            corner_radius=10, fg_color=ENTRY_BG, button_color="#e2e8f0", button_hover_color="#cbd5e1",
+            text_color=TEXT, dropdown_fg_color=ENTRY_BG, dropdown_text_color=TEXT,
+            height=38, anchor="w",
+        ).pack(fill="x", pady=(6, 20))
 
-        self.download_btn = ttk.Button(
-            inner, text="Download", style="Accent.TButton", command=self._start_download
+        self.download_btn = ctk.CTkButton(
+            inner, text="Download", height=48, corner_radius=999,
+            fg_color=ACCENT, hover_color=ACCENT_HOVER, font=ctk.CTkFont(size=15, weight="bold"),
+            command=self._start_download,
         )
-        self.download_btn.pack(fill="x", pady=(4, 14))
+        self.download_btn.pack(fill="x", pady=(0, 14))
 
-        self.progress = ttk.Progressbar(inner, style="Accent.Horizontal.TProgressbar", mode="indeterminate")
-        self.progress.pack(fill="x", pady=(0, 14))
-
-        ttk.Label(inner, text="ACTIVITY LOG", style="Section.TLabel").pack(anchor="w")
-        log_frame = tk.Frame(inner, bg=LOG_BG)
-        log_frame.pack(fill="both", expand=True, pady=(4, 0))
-        self.log_text = tk.Text(
-            log_frame, height=10, state="disabled", wrap="word",
-            bg=LOG_BG, fg=LOG_FG, insertbackground=LOG_FG,
-            relief="flat", padx=10, pady=10, font=("Consolas", 9),
+        self.progress = ctk.CTkProgressBar(
+            inner, corner_radius=999, height=8, progress_color=ACCENT, fg_color="#e2e8f0",
         )
-        self.log_text.pack(fill="both", expand=True)
+        self.progress.set(0)
+        self.progress.pack(fill="x", pady=(0, 20))
 
-        ttk.Label(
-            self, text="សូមទាញយកតែវីឌេអូដែលអ្នកមានសិទ្ធិ ឬបានទទួលការអនុញ្ញាតប៉ុណ្ណោះ", style="Muted.TLabel"
-        ).pack(pady=(0, 14))
+        self._section_label(inner, "Activity Log")
+        self.log_text = ctk.CTkTextbox(
+            inner, corner_radius=12, fg_color=LOG_BG, text_color=LOG_FG,
+            font=ctk.CTkFont(family="Consolas", size=12), wrap="word", height=180,
+        )
+        self.log_text.pack(fill="both", expand=True, pady=(6, 0))
+        self.log_text.insert("end", "Waiting for a link...")
+        self.log_text.configure(state="disabled")
 
-    def _add_paste_menu(self, entry: ttk.Entry):
+    def _section_label(self, parent, text: str):
+        ctk.CTkLabel(
+            parent, text=text.upper(), anchor="w", font=ctk.CTkFont(size=11, weight="bold"), text_color=MUTED
+        ).pack(fill="x")
+
+    def _add_paste_menu(self, entry: ctk.CTkEntry):
         menu = tk.Menu(entry, tearoff=0)
         menu.add_command(label="Cut", command=lambda: entry.event_generate("<<Cut>>"))
         menu.add_command(label="Copy", command=lambda: entry.event_generate("<<Copy>>"))
         menu.add_command(label="Paste", command=lambda: entry.event_generate("<<Paste>>"))
         menu.add_separator()
-        menu.add_command(label="Select All", command=lambda: entry.selection_range(0, "end"))
+        menu.add_command(label="Select All", command=lambda: entry.select_range(0, "end"))
         entry.bind("<Button-3>", lambda e: menu.tk_popup(e.x_root, e.y_root))
 
     def _browse_folder(self):
@@ -195,12 +198,20 @@ class App(tk.Tk):
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
 
+    def _clear_log(self, text: str):
+        self.log_text.configure(state="normal")
+        self.log_text.delete("1.0", "end")
+        self.log_text.insert("end", text + "\n")
+        self.log_text.configure(state="disabled")
+
     def _drain_log_queue(self):
         try:
             while True:
                 item = self.log_queue.get_nowait()
                 if item == "__DONE__":
                     self._on_download_finished()
+                elif isinstance(item, tuple) and item[0] == "progress":
+                    self.progress.set(item[1])
                 else:
                     self._append_log(item)
         except queue.Empty:
@@ -219,8 +230,8 @@ class App(tk.Tk):
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
         self.download_btn.configure(state="disabled")
-        self.progress.start(12)
-        self._append_log(f"Starting download: {url}")
+        self.progress.set(0)
+        self._clear_log(f"Starting download: {url}")
 
         thread = threading.Thread(
             target=self._run_download, args=(url, output_dir, self.quality.get()), daemon=True
@@ -230,22 +241,26 @@ class App(tk.Tk):
     def _run_download(self, url: str, output_dir: str, quality: str):
         def hook(d):
             if d.get("status") == "downloading":
+                total = d.get("total_bytes") or d.get("total_bytes_estimate")
+                downloaded = d.get("downloaded_bytes", 0)
+                if total:
+                    self.log_queue.put(("progress", downloaded / total))
                 pct = d.get("_percent_str", "").strip()
                 speed = d.get("_speed_str", "").strip()
                 self.log_queue.put(f"Downloading... {pct} at {speed}")
             elif d.get("status") == "finished":
+                self.log_queue.put(("progress", 1.0))
                 self.log_queue.put("Download finished, merging/post-processing...")
 
         try:
-            download(url, output_dir, quality, progress_hooks=[hook])
-            self.log_queue.put("Done! Saved to: " + str(Path(output_dir).resolve()))
+            file_path = download(url, output_dir, quality, progress_hooks=[hook])
+            self.log_queue.put("Done! Saved to: " + str(file_path))
         except Exception as e:
             self.log_queue.put(f"Failed: {e}")
         finally:
             self.log_queue.put("__DONE__")
 
     def _on_download_finished(self):
-        self.progress.stop()
         self.download_btn.configure(state="normal")
 
 

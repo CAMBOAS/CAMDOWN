@@ -2,3 +2,5 @@ yt-dlp
 flask
 gunicorn
 imageio-ffmpeg
+customtkinter
+pillow
