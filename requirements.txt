@@ -4,3 +4,4 @@ gunicorn
 imageio-ffmpeg
 customtkinter
 pillow
+pystray
