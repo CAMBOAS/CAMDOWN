@@ -6,16 +6,25 @@ Run:
 """
 
 import queue
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from config import load_config, save_config
+from config import load_config, resolve_output_dir, save_config
 from fb_downloader import download
 
 QUALITIES = ["2160", "1080", "720", "480", "360"]
-LOGO_PATH = Path(__file__).resolve().parent / "images" / "logo" / "CAMBO .png"
+
+
+def resource_path(*parts: str) -> Path:
+    """Locate a bundled read-only asset, whether run from source or a PyInstaller .exe."""
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base.joinpath(*parts)
+
+
+LOGO_PATH = resource_path("images", "logo", "CAMBO .png")
 
 ACCENT = "#6366f1"
 BG = "#f4f6fb"
@@ -36,7 +45,7 @@ class App(tk.Tk):
 
         self.log_queue: queue.Queue = queue.Queue()
         config = load_config()
-        self.output_dir = tk.StringVar(value=str(Path(__file__).resolve().parent / config["output_dir"]))
+        self.output_dir = tk.StringVar(value=str(resolve_output_dir()))
         self.quality = tk.StringVar(value=config["quality"])
         self.url_var = tk.StringVar()
 

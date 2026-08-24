@@ -3,3 +3,6 @@ __pycache__/
 downloads/
 config.json
 cookies.txt
+build/
+dist/
+*.spec

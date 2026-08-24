@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
-from config import load_config, resolve_output_dir, save_config
+from config import get_app_root, load_config, resolve_output_dir, save_config
 
 try:
     import yt_dlp
@@ -74,7 +74,7 @@ def find_cookies_file() -> str | None:
 
     candidates = [
         Path("/etc/secrets/cookies.txt"),
-        Path(__file__).resolve().parent / "cookies.txt",
+        get_app_root() / "cookies.txt",
     ]
     for candidate in candidates:
         if candidate.is_file():

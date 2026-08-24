@@ -7,9 +7,18 @@ computer never carries over someone else's folder paths.
 """
 
 import json
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+
+def get_app_root() -> Path:
+    """Writable app folder: the .exe's own folder when frozen, else this file's folder."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+PROJECT_ROOT = get_app_root()
 CONFIG_PATH = PROJECT_ROOT / "config.json"
 
 DEFAULTS = {
