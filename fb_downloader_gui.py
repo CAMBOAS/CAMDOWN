@@ -179,13 +179,31 @@ class App(ctk.CTk):
         ).pack(fill="x")
 
     def _add_paste_menu(self, entry: ctk.CTkEntry):
+        # CTkEntry is a wrapper; the real tkinter.Entry (which actually receives
+        # clicks/keys) lives at entry._entry, so bindings must target that directly.
+        target = getattr(entry, "_entry", entry)
+
+        def paste(_event=None):
+            try:
+                clip = entry.clipboard_get()
+            except tk.TclError:
+                return "break"
+            try:
+                target.delete("sel.first", "sel.last")
+            except tk.TclError:
+                pass
+            target.insert("insert", clip)
+            return "break"
+
         menu = tk.Menu(entry, tearoff=0)
-        menu.add_command(label="Cut", command=lambda: entry.event_generate("<<Cut>>"))
-        menu.add_command(label="Copy", command=lambda: entry.event_generate("<<Copy>>"))
-        menu.add_command(label="Paste", command=lambda: entry.event_generate("<<Paste>>"))
+        menu.add_command(label="Cut", command=lambda: target.event_generate("<<Cut>>"))
+        menu.add_command(label="Copy", command=lambda: target.event_generate("<<Copy>>"))
+        menu.add_command(label="Paste", command=paste)
         menu.add_separator()
-        menu.add_command(label="Select All", command=lambda: entry.select_range(0, "end"))
-        entry.bind("<Button-3>", lambda e: menu.tk_popup(e.x_root, e.y_root))
+        menu.add_command(label="Select All", command=lambda: target.select_range(0, "end"))
+        target.bind("<Button-3>", lambda e: menu.tk_popup(e.x_root, e.y_root))
+        target.bind("<Control-v>", paste)
+        target.bind("<Control-V>", paste)
 
     def _browse_folder(self):
         folder = filedialog.askdirectory(initialdir=self.output_dir.get() or ".")
