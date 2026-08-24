@@ -47,8 +47,8 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("CAMDOWN")
-        self.geometry("620x720")
-        self.minsize(580, 660)
+        self.geometry("400x560")
+        self.minsize(380, 520)
         self.configure(fg_color=BG)
 
         self.log_queue: queue.Queue = queue.Queue()
@@ -83,99 +83,99 @@ class App(ctk.CTk):
 
     def _build_header(self):
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", pady=(36, 20))
+        header.pack(fill="x", pady=(20, 12))
 
         if LOGO_PATH.exists():
             img = Image.open(LOGO_PATH)
-            self.logo_img = ctk.CTkImage(light_image=img, dark_image=img, size=(72, 72))
+            self.logo_img = ctk.CTkImage(light_image=img, dark_image=img, size=(44, 44))
             ctk.CTkLabel(header, image=self.logo_img, text="").pack()
 
         ctk.CTkLabel(
-            header, text="CAMDOWN", font=ctk.CTkFont(size=26, weight="bold"), text_color="#f8fafc"
-        ).pack(pady=(12, 2))
+            header, text="CAMDOWN", font=ctk.CTkFont(size=18, weight="bold"), text_color="#f8fafc"
+        ).pack(pady=(6, 1))
         ctk.CTkLabel(
             header,
             text="Facebook · YouTube · TikTok · Instagram · Pinterest",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=10),
             text_color=MUTED,
         ).pack()
 
     def _build_card(self):
-        card = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=20)
-        card.pack(fill="both", expand=True, padx=28, pady=(0, 28))
+        card = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=16)
+        card.pack(fill="both", expand=True, padx=16, pady=(0, 16))
 
         inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=28, pady=28)
+        inner.pack(fill="both", expand=True, padx=16, pady=16)
 
         self._section_label(inner, "Video URL")
         url_row = ctk.CTkFrame(inner, fg_color="transparent")
-        url_row.pack(fill="x", pady=(6, 16))
+        url_row.pack(fill="x", pady=(4, 10))
         url_entry = ctk.CTkEntry(
             url_row, textvariable=self.url_var, placeholder_text="Paste a video link...",
-            corner_radius=10, fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=38,
+            corner_radius=8, fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=30,
         )
         url_entry.pack(side="left", fill="x", expand=True)
         self._add_paste_menu(url_entry)
         ctk.CTkButton(
-            url_row, text="✕", width=38, height=38, corner_radius=10,
+            url_row, text="✕", width=30, height=30, corner_radius=8,
             fg_color=ENTRY_BG, hover_color="#fef2f2", text_color=MUTED,
             border_color=ENTRY_BORDER, border_width=1,
             command=lambda: self.url_var.set(""),
-        ).pack(side="left", padx=(8, 0))
+        ).pack(side="left", padx=(6, 0))
 
         self._section_label(inner, "Save to")
         folder_row = ctk.CTkFrame(inner, fg_color="transparent")
-        folder_row.pack(fill="x", pady=(6, 4))
+        folder_row.pack(fill="x", pady=(4, 2))
         folder_entry = ctk.CTkEntry(
-            folder_row, textvariable=self.output_dir, corner_radius=10,
-            fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=38,
+            folder_row, textvariable=self.output_dir, corner_radius=8,
+            fg_color=ENTRY_BG, border_color=ENTRY_BORDER, height=30,
         )
         folder_entry.pack(side="left", fill="x", expand=True)
         self._add_paste_menu(folder_entry)
         ctk.CTkButton(
-            folder_row, text="Browse", width=80, height=38, corner_radius=10,
+            folder_row, text="Browse", width=64, height=30, corner_radius=8,
             fg_color=ENTRY_BG, hover_color="#f1f5f9", text_color=TEXT,
-            border_color=ENTRY_BORDER, border_width=1,
+            border_color=ENTRY_BORDER, border_width=1, font=ctk.CTkFont(size=11),
             command=self._browse_folder,
-        ).pack(side="left", padx=(8, 0))
+        ).pack(side="left", padx=(6, 0))
         ctk.CTkLabel(
             inner, text="Auto-sorted into a subfolder per platform", anchor="w",
-            font=ctk.CTkFont(size=11), text_color=MUTED,
-        ).pack(fill="x", pady=(0, 16))
+            font=ctk.CTkFont(size=9), text_color=MUTED,
+        ).pack(fill="x", pady=(0, 10))
 
         self._section_label(inner, "Quality")
         ctk.CTkOptionMenu(
             inner, values=[f"{q}p" for q in QUALITIES], variable=self.quality_display,
-            corner_radius=10, fg_color=ENTRY_BG, button_color="#e2e8f0", button_hover_color="#cbd5e1",
+            corner_radius=8, fg_color=ENTRY_BG, button_color="#e2e8f0", button_hover_color="#cbd5e1",
             text_color=TEXT, dropdown_fg_color=ENTRY_BG, dropdown_text_color=TEXT,
-            height=38, anchor="w",
-        ).pack(fill="x", pady=(6, 20))
+            height=30, anchor="w", font=ctk.CTkFont(size=12),
+        ).pack(fill="x", pady=(4, 12))
 
         self.download_btn = ctk.CTkButton(
-            inner, text="Download", height=48, corner_radius=999,
-            fg_color=ACCENT, hover_color=ACCENT_HOVER, font=ctk.CTkFont(size=15, weight="bold"),
+            inner, text="Download", height=36, corner_radius=999,
+            fg_color=ACCENT, hover_color=ACCENT_HOVER, font=ctk.CTkFont(size=13, weight="bold"),
             command=self._start_download,
         )
-        self.download_btn.pack(fill="x", pady=(0, 14))
+        self.download_btn.pack(fill="x", pady=(0, 10))
 
         self.progress = ctk.CTkProgressBar(
-            inner, corner_radius=999, height=8, progress_color=ACCENT, fg_color="#e2e8f0",
+            inner, corner_radius=999, height=6, progress_color=ACCENT, fg_color="#e2e8f0",
         )
         self.progress.set(0)
-        self.progress.pack(fill="x", pady=(0, 20))
+        self.progress.pack(fill="x", pady=(0, 12))
 
         self._section_label(inner, "Activity Log")
         self.log_text = ctk.CTkTextbox(
-            inner, corner_radius=12, fg_color=LOG_BG, text_color=LOG_FG,
-            font=ctk.CTkFont(family="Consolas", size=12), wrap="word", height=180,
+            inner, corner_radius=10, fg_color=LOG_BG, text_color=LOG_FG,
+            font=ctk.CTkFont(family="Consolas", size=10), wrap="word", height=110,
         )
-        self.log_text.pack(fill="both", expand=True, pady=(6, 0))
+        self.log_text.pack(fill="both", expand=True, pady=(4, 0))
         self.log_text.insert("end", "Waiting for a link...")
         self.log_text.configure(state="disabled")
 
     def _section_label(self, parent, text: str):
         ctk.CTkLabel(
-            parent, text=text.upper(), anchor="w", font=ctk.CTkFont(size=11, weight="bold"), text_color=MUTED
+            parent, text=text.upper(), anchor="w", font=ctk.CTkFont(size=10, weight="bold"), text_color=MUTED
         ).pack(fill="x")
 
     def _add_paste_menu(self, entry: ctk.CTkEntry):

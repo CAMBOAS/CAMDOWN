@@ -24,6 +24,22 @@ app = Flask(__name__)
 
 IS_RENDER = bool(os.environ.get("RENDER"))
 
+
+@app.after_request
+def add_cors_headers(response):
+    # Lets the browser extension's content scripts (running on facebook.com,
+    # youtube.com, etc.) call this localhost API despite the cross-origin request.
+    if request.path.startswith("/api/"):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
+@app.route("/api/<path:_unused>", methods=["OPTIONS"])
+def api_preflight(_unused):
+    return "", 204
+
 jobs: dict[str, dict] = {}
 jobs_lock = threading.Lock()
 

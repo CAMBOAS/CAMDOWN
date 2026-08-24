@@ -1,0 +1,61 @@
+#camdown-btn {
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  user-select: none;
+}
+
+#camdown-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 26px rgba(99, 102, 241, 0.7);
+}
+
+#camdown-btn.camdown-busy {
+  animation: camdown-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes camdown-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+#camdown-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+  pointer-events: none;
+}
+
+#camdown-toast {
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 86px;
+  right: 24px;
+  max-width: 280px;
+  background: #0f172a;
+  color: #94e2b8;
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: Consolas, "Courier New", monospace;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: none;
+  word-break: break-word;
+}
+
+#camdown-toast.camdown-error {
+  color: #fca5a5;
+}
