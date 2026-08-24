@@ -23,6 +23,8 @@ except ImportError:
     print("Missing dependency. Install it first:\n  pip install -r requirements.txt")
     sys.exit(1)
 
+CONCURRENT_FRAGMENTS = 8  # IDM-style parallel-connection downloading for fragmented formats
+
 PLATFORM_DOMAINS = {
     "Facebook": ("facebook.com", "fb.watch"),
     "YouTube": ("youtube.com", "youtu.be"),
@@ -106,6 +108,7 @@ def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> li
         "quiet": False,
         "no_warnings": False,
         "progress_hooks": progress_hooks or [],
+        "concurrent_fragment_downloads": CONCURRENT_FRAGMENTS,
     }
     ffmpeg_dir = find_ffmpeg()
     if ffmpeg_dir:
