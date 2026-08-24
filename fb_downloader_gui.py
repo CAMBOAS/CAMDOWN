@@ -271,8 +271,10 @@ class App(ctk.CTk):
                 self.log_queue.put("Download finished, merging/post-processing...")
 
         try:
-            file_path = download(url, output_dir, quality, progress_hooks=[hook])
-            self.log_queue.put("Done! Saved to: " + str(file_path))
+            file_paths = download(url, output_dir, quality, progress_hooks=[hook])
+            for path in file_paths:
+                self.log_queue.put("Saved: " + str(path))
+            self.log_queue.put(f"Done! {len(file_paths)} file(s) saved.")
         except Exception as e:
             self.log_queue.put(f"Failed: {e}")
         finally:

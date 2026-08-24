@@ -11,13 +11,14 @@ import sys
 import threading
 import uuid
 import webbrowser
+import zipfile
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request, send_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import load_config, resolve_output_dir, save_config  # noqa: E402
-from fb_downloader import download  # noqa: E402
+from fb_downloader import detect_platform, download  # noqa: E402
 
 app = Flask(__name__)
 
@@ -44,13 +45,23 @@ def run_job(job_id: str, url: str, output_dir: str, quality: str) -> None:
 
     try:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        file_path = download(url, output_dir, quality, progress_hooks=[hook])
+        file_paths = download(url, output_dir, quality, progress_hooks=[hook])
+
+        if len(file_paths) > 1:
+            zip_path = file_paths[0].parent / f"{job_id}.zip"
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for p in file_paths:
+                    zf.write(p, arcname=p.name)
+            final_path, final_name = zip_path, f"{detect_platform(url)}_videos.zip"
+        else:
+            final_path, final_name = file_paths[0], file_paths[0].name
+
         with jobs_lock:
             jobs[job_id]["status"] = "done"
             jobs[job_id]["percent"] = 100
-            jobs[job_id]["file_path"] = str(file_path)
-            jobs[job_id]["file_name"] = file_path.name
-            jobs[job_id]["log"].append(f"Done! Saved to: {file_path}")
+            jobs[job_id]["file_path"] = str(final_path)
+            jobs[job_id]["file_name"] = final_name
+            jobs[job_id]["log"].append(f"Done! {len(file_paths)} file(s) saved.")
     except Exception as e:
         with jobs_lock:
             jobs[job_id]["status"] = "error"

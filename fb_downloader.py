@@ -44,6 +44,14 @@ def detect_platform(url: str) -> str:
     return "Other"
 
 
+def is_tiktok_profile_url(url: str) -> bool:
+    """True for a TikTok profile link (e.g. tiktok.com/@user) rather than one specific video."""
+    if detect_platform(url) != "TikTok":
+        return False
+    path = urlparse(url).path
+    return "/@" in path and "/video/" not in path
+
+
 def find_ffmpeg() -> str | None:
     """Return a directory containing an ffmpeg binary: PATH, winget (Windows), then a bundled static build."""
     on_path = shutil.which("ffmpeg")
@@ -82,14 +90,19 @@ def find_cookies_file() -> str | None:
     return None
 
 
-def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> Path:
-    """Download url into output_dir/<platform>/ and return the path of the final video file."""
+def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> list[Path]:
+    """Download url into output_dir/<platform>/ and return the final video file path(s).
+
+    A TikTok profile URL (no specific video) downloads every video on that profile,
+    so this can return more than one path.
+    """
     platform_dir = Path(output_dir) / detect_platform(url)
+    is_batch = is_tiktok_profile_url(url)
     ydl_opts = {
         "outtmpl": str(platform_dir / "%(title)s.%(ext)s"),
         "format": f"bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best",
         "merge_output_format": "mp4",
-        "noplaylist": True,
+        "noplaylist": not is_batch,
         "quiet": False,
         "no_warnings": False,
         "progress_hooks": progress_hooks or [],
@@ -102,9 +115,15 @@ def download(url: str, output_dir: str, quality: str, progress_hooks=None) -> Pa
         ydl_opts["cookiefile"] = cookies_file
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
-        filename = Path(ydl.prepare_filename(info))
-        merged = filename.with_suffix(".mp4")
-        return merged if merged.exists() else filename
+        entries = info["entries"] if info.get("_type") == "playlist" else [info]
+        paths = []
+        for entry in entries:
+            if entry is None:
+                continue
+            filename = Path(ydl.prepare_filename(entry))
+            merged = filename.with_suffix(".mp4")
+            paths.append(merged if merged.exists() else filename)
+        return paths
 
 
 def main() -> None:
@@ -147,9 +166,11 @@ def main() -> None:
         )
 
     for url in urls:
-        print(f"\n== Downloading ({detect_platform(url)}): {url} ==")
+        label = "profile (all videos)" if is_tiktok_profile_url(url) else detect_platform(url)
+        print(f"\n== Downloading ({label}): {url} ==")
         try:
-            download(url, output_dir, quality)
+            for path in download(url, output_dir, quality):
+                print(f"Saved: {path}")
         except Exception as e:
             print(f"Failed to download {url}: {e}")
 
