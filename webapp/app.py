@@ -14,7 +14,7 @@ import webbrowser
 import zipfile
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import load_config, resolve_output_dir, save_config  # noqa: E402
@@ -39,6 +39,18 @@ def add_cors_headers(response):
 @app.route("/api/<path:_unused>", methods=["OPTIONS"])
 def api_preflight(_unused):
     return "", 204
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    return send_from_directory(app.static_folder, "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/sw.js")
+def service_worker():
+    # Served from the root (not /static/sw.js) so its default scope covers the whole app.
+    return send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+
 
 jobs: dict[str, dict] = {}
 jobs_lock = threading.Lock()
