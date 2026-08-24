@@ -26,12 +26,6 @@
     document.documentElement.appendChild(toast);
   }
 
-  function removeUI() {
-    if (btn) { btn.remove(); btn = null; }
-    if (toast) { toast.remove(); toast = null; }
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-  }
-
   function showToast(text, isError) {
     if (!toast) return;
     toast.textContent = text;
@@ -115,15 +109,20 @@
     }
   }
 
-  function sync() {
-    if (hasVideo()) {
-      ensureUI();
-    } else {
-      removeUI();
-    }
+  // Facebook/TikTok/etc. mutate the DOM constantly (notification badges, chat,
+  // feed virtualization). Debounce the check, and once the button is shown,
+  // leave it up rather than tearing it down on every transient mutation
+  // where a <video> briefly isn't present.
+  let syncTimer = null;
+  function scheduleSync() {
+    if (syncTimer) return;
+    syncTimer = setTimeout(() => {
+      syncTimer = null;
+      if (hasVideo()) ensureUI();
+    }, 400);
   }
 
-  sync();
-  const observer = new MutationObserver(sync);
+  scheduleSync();
+  const observer = new MutationObserver(scheduleSync);
   observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
