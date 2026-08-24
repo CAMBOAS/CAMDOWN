@@ -1,0 +1,128 @@
+:root {
+  --accent: #6366f1;
+  --accent-2: #22c55e;
+}
+
+* {
+  font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.18), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(34, 197, 94, 0.15), transparent 45%),
+    linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+}
+
+.brand-logo {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 14px rgba(99, 102, 241, 0.45));
+}
+
+.brand h1 {
+  color: #f8fafc;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.brand p {
+  color: #94a3b8 !important;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.5);
+}
+
+.form-label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  border-color: #e2e8f0;
+}
+
+.input-group .form-control {
+  border-radius: 0;
+}
+
+.input-group-text {
+  border-radius: 10px 0 0 10px;
+  border-color: #e2e8f0;
+}
+
+#clear-url {
+  border-radius: 0 10px 10px 0;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  background: #ffffff;
+}
+
+#clear-url:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.15);
+}
+
+#download-btn {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#download-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(99, 102, 241, 0.7);
+}
+
+#download-btn:disabled {
+  opacity: 0.75;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.progress-bar.bg-danger {
+  background: #ef4444 !important;
+}
+
+.log-box {
+  background: #0f172a;
+  color: #94e2b8;
+  border-radius: 12px;
+  padding: 14px;
+  height: 220px;
+  overflow-y: auto;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
